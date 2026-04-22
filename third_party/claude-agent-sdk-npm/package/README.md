@@ -1,13 +1,4 @@
-# Agent-Framework
-
-This repository is the InplusLab agent framework workspace. It is currently bootstrapped from Anthropic's Claude Agent SDK so we can use it as the baseline for secondary development and for integrating methods from our lab's papers and project work.
-
-- Upstream GitHub baseline: `anthropics/claude-agent-sdk-typescript`
-- Upstream version snapshot: `v0.2.117`
-- Published package snapshot: `@anthropic-ai/claude-agent-sdk@0.2.117`
-- Local bootstrap note: `INPLUSLAB_BOOTSTRAP.md`
-
-## Upstream SDK README
+# Claude Agent SDK
 
 ![](https://img.shields.io/badge/Node.js-18%2B-brightgreen?style=flat-square) [![npm]](https://www.npmjs.com/package/@anthropic-ai/claude-agent-sdk)
 
@@ -15,7 +6,7 @@ This repository is the InplusLab agent framework workspace. It is currently boot
 
 The Claude Agent SDK enables you to programmatically build AI agents with Claude Code's capabilities. Create autonomous agents that can understand codebases, edit files, run commands, and execute complex workflows.
 
-**Learn more in the [official documentation](https://docs.claude.com/en/api/agent-sdk/overview)**.
+**Learn more in the [official documentation](https://platform.claude.com/docs/en/agent-sdk/overview)**.
 
 ## Get started
 
@@ -27,7 +18,7 @@ npm install @anthropic-ai/claude-agent-sdk
 
 ## Migrating from the Claude Code SDK
 
-The Claude Code SDK is now the Claude Agent SDK. Please check out the [migration guide](https://docs.claude.com/en/docs/claude-code/sdk/migration-guide) for details on breaking changes.
+The Claude Code SDK is now the Claude Agent SDK. Please check out the [migration guide](https://platform.claude.com/docs/en/agent-sdk/migration-guide) for details on breaking changes.
 
 ## Reporting Bugs
 
@@ -47,11 +38,7 @@ See our [data usage policies](https://docs.anthropic.com/en/docs/claude-code/dat
 
 ### Privacy safeguards
 
-We have implemented several safeguards to protect your data, including limited retention periods for sensitive information, restricted access to user session data, and clear policies against using feedback for model training.
+We have implemented several safeguards to protect your data, including limited retention periods for sensitive information and restricted access to user session data.
 
 For full details, please review our [Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms) and [Privacy Policy](https://www.anthropic.com/legal/privacy).
-
-## License and terms
-
-Use of this SDK is governed by Anthropic's [Commercial Terms of Service](https://www.anthropic.com/legal/commercial-terms), including when you use it to power products and services that you make available to your own customers and end users, except to the extent a specific component or dependency is covered by a different license as indicated in that component's LICENSE file.
 
