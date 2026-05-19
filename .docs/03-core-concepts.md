@@ -2,48 +2,30 @@
 
 ## 本章抓手
 
-如果你第一次接触 Agent，最常见的问题不是“不会写代码”，而是“名词全都认识，放在一起就糊了”。这一章就是把它们压缩成一张能长期使用的概念图。
+第一次接触 Agent 时，最常见的卡点是名词很多、关系不清。这一章把核心概念压缩成一张能长期使用的概念图。
 
-## 五个最关键的概念
+## 核心概念速览
 
-### 1. LLM
-
-LLM 是会生成文本的模型。它擅长理解指令、归纳上下文、生成计划，但它本身并不会直接读你的仓库、写你的文件或执行终端命令。
-
-### 2. Tool
-
-Tool 是模型可调用的外部能力。比如 Read、Edit、Bash、WebFetch。工具让模型从“只会说”变成“能做事”。
-
-### 3. Agent
-
-Agent 不是另一个模型，而是“模型 + 工具 + 循环控制 + 状态”的组合体。它像一个能自己走几步的程序，而不是一次性的 API 调用。
-
-### 4. Session
-
-Session 是一段连续任务的轨迹。它记录用户说了什么、模型做了什么、调用了哪些工具、最后停在哪里。它像飞行记录仪。
-
-### 5. MCP
-
-MCP 是 Model Context Protocol。可以把它看成“模型接外设的统一协议”。如果 Tool 是插头，MCP 就是插座标准。
+| 概念 | 作用 | 在流程中的位置 | 在仓库里先看哪里 |
+| --- | --- | --- | --- |
+| LLM | 负责理解提示并生成下一步文本 | 位于推理核心，决定任务中的语言和计划 | 本章先建立概念，再回到 [04-first-query.md](04-first-query.md) 看它如何进入执行循环 |
+| Tool | 负责执行读文件、改文件、跑命令、访问网络等外部动作 | 位于模型与真实环境之间 | ../third_party/claude-agent-sdk-npm/package/sdk.d.ts 里的 tools、allowedTools、canUseTool |
+| Agent | 负责把模型、工具、状态和控制循环组织成可执行任务 | 贯穿整个任务生命周期 | ../third_party/claude-agent-sdk-npm/package/sdk.d.ts 里的 query、AgentDefinition、Options |
+| Session | 负责记录一次连续任务的运行轨迹 | 位于执行过程、恢复机制和可观测性之间 | ../third_party/claude-agent-sdk-npm/package/sdk.d.ts 里的 sessionId、resume、SDKMessage |
+| SessionStore | 负责把会话轨迹镜像到外部存储，并在需要时支持恢复 | 位于本地 transcript 与外部存储之间 | [09-session-store-contract.md](09-session-store-contract.md) |
+| Hook | 负责在生命周期节点上插入额外逻辑，例如记录、审批、阻断或补充上下文 | 位于执行流程的关键事件点 | [07-agents-hooks-mcp.md](07-agents-hooks-mcp.md) 和 sdk.d.ts 里的 HookEvent |
+| MCP | 负责接入外部工具与服务 | 位于 Agent 与外部能力之间 | [07-agents-hooks-mcp.md](07-agents-hooks-mcp.md) 和 sdk.d.ts 里的 mcpServers |
 
 ## 一个最有用的类比
 
-- 模型像大脑。
-- 工具像手。
-- Session 像黑匣子。
-- Hooks 像拦截器。
-- SessionStore 像外接存储。
-- MCP 像设备总线。
-
-## 这些概念在仓库里如何落地
-
-| 概念 | 仓库锚点 | 你应该观察什么 |
-| --- | --- | --- |
-| Agent | ../third_party/claude-agent-sdk-npm/package/sdk.d.ts | query、AgentDefinition、Options |
-| Tool | ../third_party/claude-agent-sdk-npm/package/sdk.d.ts | tools、allowedTools、canUseTool、permissionMode |
-| Session | ../third_party/claude-agent-sdk-npm/package/sdk.d.ts | resume、sessionId、SDKMessage |
-| SessionStore | ../third_party/claude-agent-sdk-npm/package/sdk.d.ts | append/load/listSessions/delete/listSubkeys |
-| MCP | ../third_party/claude-agent-sdk-npm/package/sdk.d.ts | mcpServers、onElicitation、相关 hook/event |
+| 抽象 | 类比 |
+| --- | --- |
+| LLM | 大脑 |
+| Tool | 手 |
+| Session | 黑匣子 |
+| Hook | 拦截器 |
+| SessionStore | 外接存储 |
+| MCP | 设备总线 |
 
 ## Agent 的最小闭环
 
@@ -59,19 +41,17 @@ flowchart LR
     R --> S[写入 Session]
 ```
 
-## 初学者最容易混淆的三件事
+## 初学者最容易混淆的三组概念
 
-### 模型不等于 Agent
+| 容易混淆的说法 | 正确区分 | 在本仓库里的体现 |
+| --- | --- | --- |
+| 模型 = Agent | 模型提供推理核心；Agent 还要把工具、状态和控制循环组织起来 | query 返回的是一个完整运行过程，能串起工具、状态和回合控制 |
+| Workflow = Agent | 固定工作流侧重预先编排；Agent 会根据上下文临场决定下一步动作 | tool 调用、权限判断和 resume 说明它具备决策与状态管理 |
+| Memory = 向量数据库 | 这里先出现的是 Session 与 SessionStore，也就是会话轨迹镜像与恢复 | [08-message-stream-and-resume.md](08-message-stream-and-resume.md) 和 [09-session-store-contract.md](09-session-store-contract.md) 重点在轨迹恢复，检索式记忆可以在此基础上继续扩展 |
 
-模型只是 Agent 的计算核心。没有工具与状态时，它只是一次响应器。
+## 如果只想先记住一句话
 
-### Workflow 不等于 Agent
-
-一个固定工作流可以完全没有自主性；一个 Agent 则需要根据上下文决定下一步要不要读文件、要不要跑命令、要不要再问人。
-
-### Memory 不等于向量数据库
-
-在这个仓库里，你先看到的是 Session 和 SessionStore，也就是“会话轨迹的镜像与恢复”。这和很多论文里说的检索记忆不是一回事，但二者可以组合。
+LLM 负责想，Tool 负责做，Session 负责记，Hook 负责拦，SessionStore 负责外存，MCP 负责接外设；把这些拼起来，才叫 Agent 系统。
 
 ## 本章小结
 

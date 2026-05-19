@@ -20,8 +20,8 @@
 
 因为它允许你做三件传统 API 很难做好的事情：
 
-- 做实时 UI，而不是等最后一句话。
-- 做过程级观测，而不是只看结果。
+- 做实时 UI，让界面可以边生成边反馈。
+- 做过程级观测，直接看到执行链路中的关键节点。
 - 做失败定位，知道问题出在权限、工具、镜像还是模型。
 
 ## 推荐的消费方式
@@ -53,11 +53,11 @@ for await (const m of query({ prompt, options })) {
 
 ## resume 到底在恢复什么
 
-resume 不是简单“带上历史聊天记录”，而是恢复一段完整 session 的运行上下文。对于接了 SessionStore 的场景，恢复路径大致是：
+resume 会恢复一段完整 session 的运行上下文。对于接了 SessionStore 的场景，恢复路径大致是：
 
 1. 用 sessionId 找到主 transcript。
 2. 如果实现了 listSubkeys，再把子 Agent transcript 一并找出来。
-3. 把这些内容 materialize 成临时 JSONL。
+3. 把这些内容 materialize 成临时 JSONL，也就是把恢复所需的会话条目真正落成一个临时文件。
 4. 再让 Claude Code 的既有恢复逻辑从这个临时文件继续。
 
 这就是为什么 SessionStore 的 load 和 listSubkeys 语义必须清晰。
@@ -83,7 +83,7 @@ sequenceDiagram
 
 ## mirror_error 为什么值得单独注意
 
-SessionStore 的 append 是镜像，不是主写路径。SDK 文档明确说：如果 append 失败，会记录并发出 mirror_error，但主会话不会因此被阻断。这背后是一个很务实的工程选择：
+SessionStore 的 append 走的是镜像路径，主写仍在本地 transcript。SDK 文档明确说：如果 append 失败，会记录并发出 mirror_error，但主会话不会因此被阻断。这背后是一个很务实的工程选择：
 
 - 主任务优先完成。
 - 外部镜像失败需要被看见，但不应拖死主流程。
@@ -92,4 +92,4 @@ SessionStore 的 append 是镜像，不是主写路径。SDK 文档明确说：�
 
 ## 本章小结
 
-把 query 的输出理解成消息流，而不是简单结果值，你才真正进入了 Agent 系统的工程视角。resume、hook 观测、多 Agent 进度、镜像错误，全都依赖这条流来暴露。
+把 query 的输出按消息流来读，你就能看到系统初始化、过程观测、恢复和镜像错误这些关键事件。resume、hook 观测和多 Agent 进度，也都依赖这条流来暴露。

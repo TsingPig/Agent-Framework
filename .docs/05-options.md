@@ -64,7 +64,7 @@
 
 ### 耦合 1：sessionStore 与 persistSession
 
-sessionStore 不是替代本地持久化，而是“本地持久化成功后再做镜像”。因此 persistSession 不能关掉，否则镜像触发前提就没了。
+sessionStore 建立在本地持久化之上：本地 transcript 先落盘，再把内容镜像到外部存储。因此 persistSession 不能关掉，否则镜像触发前提就没了。
 
 ### 耦合 2：bypassPermissions 与 allowDangerouslySkipPermissions
 
@@ -101,4 +101,4 @@ mindmap
 
 ## 本章小结
 
-Options 的本质不是“可选参数列表”，而是一组系统控制杆。你每拨动一个字段，实际上都在改变 Agent 的边界、能力、风险和可观测性。
+Options 可以看成一组系统控制杆。你每拨动一个字段，实际上都在改变 Agent 的边界、能力、风险和可观测性。

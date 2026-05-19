@@ -9,7 +9,7 @@
 ../examples/session-stores/README.md 已经给出了很好的说明：每个后端目录都是一个自包含小包，里面通常有：
 
 - src：适配器实现。
-- test：单元测试与 live conformance。
+- test：单元测试与 live conformance，也就是“连上真实后端去跑契约测试”。
 - demo.ts：最小端到端示例。
 - package.json / tsconfig.json：独立依赖与编译设置。
 
@@ -23,11 +23,11 @@
 
 ### 实验 2：跑 live conformance
 
-起一个真实 Redis、Postgres 或 MinIO，再跑 test:live。你会真正感受到“契约测试”不是纸面定义，而是行为门槛。
+起一个真实 Redis、Postgres 或 MinIO，再跑 test:live。这里的 live conformance 指的是接上真实后端验证它是否真的满足契约。你会真正感受到，契约测试对应的是一条实际行为门槛。
 
 ### 实验 3：跑 demo.ts
 
-需要 ANTHROPIC_API_KEY。这个实验最重要的观察不是模型回答了什么，而是：
+需要 ANTHROPIC_API_KEY。这个实验的观察重点放在下面三件事：
 
 - sessionId 有没有拿到。
 - resume 是否真的生效。
@@ -46,17 +46,19 @@ SESSION_STORE_REDIS_URL=redis://localhost:6379/0 npm run test:live
 SESSION_STORE_REDIS_URL=redis://localhost:6379/0 npm run demo
 ```
 
+这里的 npm install 是安装当前示例包依赖；npm run demo 则是按 package.json 里定义的脚本去执行 demo.ts。
+
 如果你用 bun，也可以按目录内脚本切换。
 
 ## 这仓库最常见的几个坑
 
 ### 坑 1：把示例当生产代码
 
-示例本身已经明确写了，它们是 reference adapters，不是生产级维护承诺。做实验可以，进生产前要补弹性、监控、清理和压测。
+示例本身已经明确写了，它们是 reference adapters，适合教学和实验。进入生产前，还需要补弹性、监控、清理和压测。
 
 ### 坑 2：以为 append 失败会中断主会话
 
-不会。mirror 失败会变成 error event 暴露出来，但主会话继续。这是设计选择，不是 bug。
+mirror 失败会变成 error event 暴露出来，但主会话继续。这是有意的设计取舍，目的是保证主任务优先完成。
 
 ### 坑 3：忽略存储后端自己的行为模型
 
@@ -66,7 +68,7 @@ SESSION_STORE_REDIS_URL=redis://localhost:6379/0 npm run demo
 
 ### 坑 4：把一致性测试当性能测试
 
-conformance.ts 证明的是语义正确，不是吞吐极限。
+conformance.ts 验证的是语义正确性；吞吐极限需要单独压测。
 
 ## 很适合作为课程作业的三个小实验
 
@@ -76,4 +78,4 @@ conformance.ts 证明的是语义正确，不是吞吐极限。
 
 ## 本章小结
 
-真正学会一个工程抽象，标志不是“能复述接口”，而是“能把它跑起来、改坏、再修好”。examples 目录就是为这件事准备的。
+真正学会一个工程抽象，通常要经历跑起来、改坏、再修好这三个阶段。examples 目录就是为这件事准备的。

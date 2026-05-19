@@ -13,7 +13,7 @@ Redis 让你看到“怎么做”。Postgres 和 S3 更进一步，让你看到�
 | 顺序依据 | BIGSERIAL id | part 文件名中的 13 位 epoch ms |
 | listSessions | 聚合 MAX(created_at) | 扫描对象键并提取 mtime |
 | delete main | SQL 删除整会话 | 删除前缀下对象 |
-| delete subpath | 精确删某个 subpath | direct-only 删除某个前缀直子对象 |
+| delete subpath | 精确删某个 subpath | 只删除该前缀下的直子对象，避免把更深层路径一起误删 |
 | 典型风险 | 连接池、表膨胀 | 时钟偏斜、对象分页、线性扫描 |
 
 ## Postgres：关系数据库视角
@@ -30,7 +30,7 @@ Redis 让你看到“怎么做”。Postgres 和 S3 更进一步，让你看到�
 
 - main transcript 用 subpath IS NOT DISTINCT FROM NULL 来查。
 
-这不是小技巧，而是在精确表达“主 transcript 的 subpath 语义就是空值”。
+这个写法用来精确表达“主 transcript 的 subpath 语义就是空值”。
 
 ## S3：对象存储视角
 
@@ -60,7 +60,7 @@ part-0000000123456-ab12cd.jsonl
 这类细节正说明：
 
 - 接口简单，不代表实现简单。
-- 对象存储尤其容易在“路径像目录、其实不是目录”这件事上出错。
+- 对象存储尤其容易在“路径看起来像目录、底层实际是一组对象键”这件事上出错。
 
 ## 两种实现背后的系统思维
 
@@ -81,4 +81,4 @@ flowchart LR
 
 ## 本章小结
 
-Postgres 和 S3 让你看到一个很重要的工程事实：真正稳定的抽象，不是要求所有实现都长得像自己，而是允许实现各不相同，却仍然满足同一行为契约。
+Postgres 和 S3 让你看到一个很重要的工程事实：真正稳定的抽象允许实现各不相同，同时继续满足同一行为契约。

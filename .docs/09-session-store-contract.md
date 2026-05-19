@@ -22,11 +22,11 @@
 
 ### 哲学 1：主写在本地，外部存储是镜像
 
-append 是在本地写成功之后触发的 secondary copy。也就是说，SessionStore 不承担“唯一真相源”的职责，而承担“外部同步与恢复支持”的职责。
+append 是在本地写成功之后触发的 secondary copy。SessionStore 负责外部同步与恢复支持，本地 transcript 仍是主写路径。
 
 ### 哲学 2：接口保证行为，不强求具体存储形式
 
-你可以用 Redis list、Postgres row、S3 part files 来实现。SDK 不关心你底层长什么样，只关心这些行为是否成立：
+你可以用 Redis list、Postgres row、S3 part files 来实现。SDK 通过行为契约来约束这些实现，重点包括：
 
 - 顺序是否正确。
 - 主 transcript 与 subpath 是否隔离。
@@ -35,7 +35,7 @@ append 是在本地写成功之后触发的 secondary copy。也就是说，Sess
 
 ### 哲学 3：深相等比字节相等更重要
 
-文档明确说明，返回内容只需与 append 进去的数据 deep-equal，不要求 byte-equal。这个细节非常关键，因为像 Postgres JSONB 会重排 object key。
+文档明确说明，返回内容只需与 append 进去的数据 deep-equal。像 Postgres JSONB 这样的后端可以重排 object key，只要结构和内容保持一致即可。
 
 ## SessionKey 与 subpath
 
@@ -50,7 +50,7 @@ key 里除了 projectKey 和 sessionId，还可能有 subpath。你可以把 sub
 
 ## 13 项一致性测试在测什么
 
-../examples/session-stores/shared/conformance.ts 定义了一套 13-contract suite。它覆盖的不是性能，而是语义正确性。
+../examples/session-stores/shared/conformance.ts 定义了一套 13-contract suite。这套测试专注语义正确性；性能、吞吐和弹性需要单独压测。
 
 | 测试主题 | 实际在保护什么 |
 | --- | --- |
