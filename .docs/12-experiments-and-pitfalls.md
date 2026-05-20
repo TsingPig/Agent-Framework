@@ -33,6 +33,102 @@
 - resume 是否真的生效。
 - 外部 SessionStore 是否记录到了会话。
 
+## live conformance 到底长什么样
+
+这一步最好不要只靠嘴讲。仓库里已经把真正的契约测试写成了一个可复用的 TS 测试套件。Python 版本是教学等价写法，用来帮助你理解它在测什么，不代表仓库当前真的提供了 pytest 版。
+
+<style>
+.code-tabs {
+  margin: 16px 0;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.code-tabs input {
+  display: none;
+}
+
+.code-tabs .tab-labels {
+  display: flex;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
+}
+
+.code-tabs .tab-labels label {
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  border-right: 1px solid #d0d7de;
+}
+
+.code-tabs .tab-panel {
+  display: none;
+  padding: 0;
+}
+
+.code-tabs pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+#conformance-tab-ts:checked ~ .tab-labels label[for="conformance-tab-ts"],
+#conformance-tab-py:checked ~ .tab-labels label[for="conformance-tab-py"] {
+  background: white;
+  font-weight: 600;
+}
+
+#conformance-tab-ts:checked ~ .tab-content .ts,
+#conformance-tab-py:checked ~ .tab-content .py {
+  display: block;
+}
+</style>
+<div class="code-tabs">
+<input type="radio" name="conformance-code-tab" id="conformance-tab-ts" checked>
+<input type="radio" name="conformance-code-tab" id="conformance-tab-py">
+<div class="tab-labels">
+<label for="conformance-tab-ts">TypeScript</label>
+<label for="conformance-tab-py">Python</label>
+</div>
+<div class="tab-content">
+<div class="tab-panel ts">
+
+```ts
+describe('MyStore', () => {
+  runSessionStoreConformance(async () => new MyStore(...))
+})
+
+test('append then load returns same entries in same order', async () => {
+  const store = await makeStore()
+  const entries = [E('a', { n: 1 }), E('b', { n: 2 })]
+  await store.append(KEY, entries)
+  expectEntries(await store.load(KEY), entries)
+})
+```
+
+</div>
+<div class="tab-panel py">
+
+```py
+@pytest.mark.asyncio
+async def test_append_then_load_returns_same_entries_in_same_order(make_store):
+    store = await make_store()
+    entries = [{"type": "a", "n": 1}, {"type": "b", "n": 2}]
+    await store.append(KEY, entries)
+    assert await store.load(KEY) == entries
+```
+
+</div>
+</div>
+</div>
+
+> `runSessionStoreConformance(...)` 的作用很像“统一监考卷”。你换什么后端都可以，但必须把同一套题答对，才能说明你实现的是同一个契约，而不是一个名字相同、行为不同的接口。
+
+- 第一行 `describe + runSessionStoreConformance` 说明这套测试是可复用的。
+- 下面这个 `append then load` 用最小案例保护了“写进去什么，就按顺序读回来什么”。
+- 这类测试的价值不在于复杂，而在于它给了你一条稳定的行为底线。
+
 ## Redis 示例最小运行路径
 
 参考 ../examples/session-stores/redis/package.json 和 ../examples/session-stores/redis/demo.ts，可形成这样的操作顺序：

@@ -8,6 +8,122 @@
 
 在 ../third_party/claude-agent-sdk-npm/package/sdk.d.ts 中，SDKMessage 是一个很大的联合类型。你不需要一口气记住所有成员，但要先抓住这几类：
 
+先抓住两类最关键的消息就够了：会话刚启动时的 `system/init`，以及一轮结束时的 `result/success`。Python 版本是教学等价写法，不代表仓库当前存在同名 Python 类型文件。
+
+<style>
+.code-tabs {
+  margin: 16px 0;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.code-tabs input {
+  display: none;
+}
+
+.code-tabs .tab-labels {
+  display: flex;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
+}
+
+.code-tabs .tab-labels label {
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  border-right: 1px solid #d0d7de;
+}
+
+.code-tabs .tab-panel {
+  display: none;
+  padding: 0;
+}
+
+.code-tabs pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+#message-tab-ts:checked ~ .tab-labels label[for="message-tab-ts"],
+#message-tab-py:checked ~ .tab-labels label[for="message-tab-py"] {
+  background: white;
+  font-weight: 600;
+}
+
+#message-tab-ts:checked ~ .tab-content .ts,
+#message-tab-py:checked ~ .tab-content .py {
+  display: block;
+}
+</style>
+<div class="code-tabs">
+<input type="radio" name="message-code-tab" id="message-tab-ts" checked>
+<input type="radio" name="message-code-tab" id="message-tab-py">
+<div class="tab-labels">
+<label for="message-tab-ts">TypeScript</label>
+<label for="message-tab-py">Python</label>
+</div>
+<div class="tab-content">
+<div class="tab-panel ts">
+
+```ts
+export declare type SDKSystemMessage = {
+    type: 'system';
+    subtype: 'init';
+    cwd: string;
+    tools: string[];
+    mcp_servers: { name: string; status: string }[];
+    model: string;
+    permissionMode: PermissionMode;
+    skills: string[];
+    session_id: string;
+};
+
+export declare type SDKResultSuccess = {
+    type: 'result';
+    subtype: 'success';
+    result: string;
+    num_turns: number;
+    total_cost_usd: number;
+    session_id: string;
+};
+```
+
+</div>
+<div class="tab-panel py">
+
+```py
+class SDKSystemInitMessage(TypedDict):
+    type: Literal["system"]
+    subtype: Literal["init"]
+    cwd: str
+    tools: list[str]
+    mcp_servers: list[dict[str, str]]
+    model: str
+    permissionMode: PermissionMode
+    skills: list[str]
+    session_id: str
+
+class SDKResultSuccess(TypedDict):
+    type: Literal["result"]
+    subtype: Literal["success"]
+    result: str
+    num_turns: int
+    total_cost_usd: float
+    session_id: str
+```
+
+</div>
+</div>
+</div>
+
+> `system/init` 负责告诉你“这一轮已经启动，现场配置是什么，session_id 是多少”；`result/success` 负责告诉你“这一轮结束了，答案是什么，消耗了多少回合和成本”。
+
+- `system/init` 更像启动回执。
+- `result/success` 更像结案回执。
+- 两条消息里都带 `session_id`，这正是为什么你可以把“启动”和“收束”挂到同一条会话线上来读。
+
 - assistant 或 stream_event：模型正在说什么。
 - system/init：会话启动了，session_id 出来了。
 - system/status：当前阶段在做什么。

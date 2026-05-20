@@ -4,6 +4,103 @@
 
 如果说 query() 是门把手，那么 Options 就是控制台。你几乎可以通过它决定 Agent 的工作目录、可用工具、权限模式、恢复方式、输出格式、模型和扩展接口。
 
+## 先看一个最小但真实的 options
+
+下面这段 TypeScript 不是我临时编的，而是直接来自 ../examples/session-stores/redis/demo.ts 里的调用现场。Python 版本是教学等价写法，用来帮你迁移语法；当前仓库实际代码仍以 TypeScript 为准。
+
+<style>
+.code-tabs {
+  margin: 16px 0;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.code-tabs input {
+  display: none;
+}
+
+.code-tabs .tab-labels {
+  display: flex;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
+}
+
+.code-tabs .tab-labels label {
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  border-right: 1px solid #d0d7de;
+}
+
+.code-tabs .tab-panel {
+  display: none;
+  padding: 0;
+}
+
+.code-tabs pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+#options-tab-ts:checked ~ .tab-labels label[for="options-tab-ts"],
+#options-tab-py:checked ~ .tab-labels label[for="options-tab-py"] {
+  background: white;
+  font-weight: 600;
+}
+
+#options-tab-ts:checked ~ .tab-content .ts,
+#options-tab-py:checked ~ .tab-content .py {
+  display: block;
+}
+</style>
+<div class="code-tabs">
+<input type="radio" name="options-code-tab" id="options-tab-ts" checked>
+<input type="radio" name="options-code-tab" id="options-tab-py">
+<div class="tab-labels">
+<label for="options-tab-ts">TypeScript</label>
+<label for="options-tab-py">Python</label>
+</div>
+<div class="tab-content">
+<div class="tab-panel ts">
+
+```ts
+for await (const m of query({
+  prompt,
+  options: { sessionStore: store, resume, maxTurns: 1 },
+})) {
+  // ...
+}
+```
+
+</div>
+<div class="tab-panel py">
+
+```py
+async for m in query(
+    prompt=prompt,
+    options={
+        "sessionStore": store,
+        "resume": session_id,
+        "maxTurns": 1,
+    },
+):
+    ...
+```
+
+</div>
+</div>
+</div>
+
+> 这一小段已经把三个最关键的 options 字段摆出来了。它没有展示全部能力，但非常适合入门，因为“会话镜像”“恢复旧会话”“限制回合数”这三件事已经连起来了。
+
+- `sessionStore` 决定这次会话是否要顺手镜像到外部存储。
+- `resume` 决定这次是不是接着旧 session 继续跑。
+- `maxTurns` 决定这一轮最多允许多少次 agentic turn。
+
+你可以把 Options 想成实验台上的控制面板。`prompt` 像你要交给实验对象的问题，`options` 像你提前拨好的旋钮。旋钮不负责回答问题，但它决定实验在哪个环境里做、最多做多久、能不能接着上一次实验继续做。
+
 ## 不要把 Options 当参数堆
 
 更好的读法是分五组来看。

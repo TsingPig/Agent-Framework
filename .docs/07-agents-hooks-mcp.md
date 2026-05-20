@@ -14,6 +14,120 @@
 
 在 ../third_party/claude-agent-sdk-npm/package/sdk.d.ts 里，AgentDefinition 至少包含这些关键字段：
 
+先直接看骨架会更快。Python 版本是教学等价写法，用来帮助你把“字段像什么”看清楚。
+
+<style>
+.code-tabs {
+  margin: 16px 0;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.code-tabs input {
+  display: none;
+}
+
+.code-tabs .tab-labels {
+  display: flex;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
+}
+
+.code-tabs .tab-labels label {
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  border-right: 1px solid #d0d7de;
+}
+
+.code-tabs .tab-panel {
+  display: none;
+  padding: 0;
+}
+
+.code-tabs pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+#agentdef-tab-ts:checked ~ .tab-labels label[for="agentdef-tab-ts"],
+#agentdef-tab-py:checked ~ .tab-labels label[for="agentdef-tab-py"],
+#hookevent-tab-ts:checked ~ .tab-labels label[for="hookevent-tab-ts"],
+#hookevent-tab-py:checked ~ .tab-labels label[for="hookevent-tab-py"] {
+  background: white;
+  font-weight: 600;
+}
+
+#agentdef-tab-ts:checked ~ .tab-content .ts,
+#agentdef-tab-py:checked ~ .tab-content .py,
+#hookevent-tab-ts:checked ~ .tab-content .ts,
+#hookevent-tab-py:checked ~ .tab-content .py {
+  display: block;
+}
+</style>
+<div class="code-tabs">
+<input type="radio" name="agentdef-code-tab" id="agentdef-tab-ts" checked>
+<input type="radio" name="agentdef-code-tab" id="agentdef-tab-py">
+<div class="tab-labels">
+<label for="agentdef-tab-ts">TypeScript</label>
+<label for="agentdef-tab-py">Python</label>
+</div>
+<div class="tab-content">
+<div class="tab-panel ts">
+
+```ts
+export declare type AgentDefinition = {
+    description: string;
+    tools?: string[];
+    disallowedTools?: string[];
+    prompt: string;
+    model?: string;
+    mcpServers?: AgentMcpServerSpec[];
+    skills?: string[];
+    initialPrompt?: string;
+    maxTurns?: number;
+    background?: boolean;
+    memory?: 'user' | 'project' | 'local';
+    effort?: ('low' | 'medium' | 'high' | 'xhigh' | 'max') | number;
+    permissionMode?: PermissionMode;
+};
+```
+
+</div>
+<div class="tab-panel py">
+
+```py
+class AgentDefinition(TypedDict, total=False):
+    description: str
+    tools: list[str]
+    disallowedTools: list[str]
+    prompt: str
+    model: str
+    mcpServers: list["AgentMcpServerSpec"]
+    skills: list[str]
+    initialPrompt: str
+    maxTurns: int
+    background: bool
+    memory: Literal["user", "project", "local"]
+    effort: Literal["low", "medium", "high", "xhigh", "max"] | int
+    permissionMode: PermissionMode
+```
+
+</div>
+</div>
+</div>
+
+> 这段定义说明了一件很重要的事：子 Agent 不是一句 prompt 的别名。它更像一个完整的“工作角色配置”，里面同时放了职责说明、可用工具、权限、记忆范围和回合预算。
+
+- `description` 决定主 Agent 什么时候应该把任务交给它。
+- `prompt` 决定它接手以后按什么角色工作。
+- `tools`、`mcpServers`、`permissionMode` 决定它手里有什么工具，以及工具能用到什么程度。
+- `memory`、`maxTurns`、`background` 决定它工作多久、记多少、是不是异步跑。
+
+你可以把子 Agent 想成实验室里的一位研究助理。给他一个研究方向还不够，你还要告诉他能进哪些房间、能用哪些仪器、最多做多少轮试验、需要共享哪些上下文。
+
 - description
 - prompt
 - tools / disallowedTools
@@ -32,6 +146,56 @@
 ## 2. Hooks：在事件节点上插逻辑
 
 SDK 暴露了很多 HookEvent，例如：
+
+如果你想更直观一点，可以直接看一眼真实事件名的样子。下面是节选，不是全部枚举项。
+
+<div class="code-tabs">
+<input type="radio" name="hookevent-code-tab" id="hookevent-tab-ts" checked>
+<input type="radio" name="hookevent-code-tab" id="hookevent-tab-py">
+<div class="tab-labels">
+<label for="hookevent-tab-ts">TypeScript</label>
+<label for="hookevent-tab-py">Python</label>
+</div>
+<div class="tab-content">
+<div class="tab-panel ts">
+
+```ts
+export declare type HookEvent =
+  | 'PreToolUse'
+  | 'PostToolUse'
+  | 'PermissionRequest'
+  | 'SessionStart'
+  | 'SessionEnd'
+  | 'SubagentStart'
+  | 'SubagentStop'
+  | 'Elicitation'
+  | 'ConfigChange'
+  | 'FileChanged';
+```
+
+</div>
+<div class="tab-panel py">
+
+```py
+HookEvent = Literal[
+    "PreToolUse",
+    "PostToolUse",
+    "PermissionRequest",
+    "SessionStart",
+    "SessionEnd",
+    "SubagentStart",
+    "SubagentStop",
+    "Elicitation",
+    "ConfigChange",
+    "FileChanged",
+]
+```
+
+</div>
+</div>
+</div>
+
+> HookEvent 可以理解成一组“可挂钩的事件点”。一旦你看到这些名字，就能立刻知道 Hook 主要工作在流程节点上，而不是直接替模型推理。
 
 - PreToolUse
 - PostToolUse

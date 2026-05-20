@@ -5,6 +5,7 @@
 
 无论后面有多少复杂能力，入口都是 query()。如果你能读懂 query() 的输入、输出和最小运行轨迹，整个仓库就有了骨架。
 
+> Claude Code之所以用 typescript作为 SDK 语言，而不是更常见的 Python，主要是因为它的运行时环境也是用 TypeScript 写的。这样 SDK 和运行时能共享类型定义，减少了跨语言接口的复杂度，同时也能更快地迭代和调试。对于用户来说，虽然可能需要适应一下 TypeScript 的语法，但从长远来看，这种设计能提供更一致和高效的开发体验。
 ## 入口签名
 
 在 ../third_party/claude-agent-sdk-npm/package/sdk.d.ts 里，最重要的声明之一是：
@@ -122,17 +123,59 @@ Agent 运行会经历初始化、流式输出、工具调用和结果收束等�
 
 因此最自然的消费方式是：
 
+
+
 ```ts
 for await (const m of query({ prompt, options })) {
   // 根据消息类型处理
 }
 ```
 
+python：
+
+```py
+async for m in query(prompt=prompt, options=options): 
+    # query是一个异步迭代器，m是每次迭代得到的消息
+```
+python中异步迭代器本质上是一个实现了__aiter__和__anext__方法的对象，比如:
+```py
+class AsyncIterator:
+    def __init__(self, data):
+        self.data = data
+        self.index = 0
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if self.index >= len(self.data):
+            raise StopAsyncIteration
+        value = self.data[self.index]
+        self.index += 1
+        return value
+async def main():
+    async for item in AsyncIterator([1, 2, 3]): 
+        print(item) 
+asyncio.run(main())
+```
+
+
 ## 仓库里的最小可运行样子
 
 看 ../examples/session-stores/redis/demo.ts，可以看到一个非常好的教学版本：
 
+<div class="code-tabs">
+<input type="radio" name="run-code-tab" id="tab-run-ts" checked>
+<input type="radio" name="run-code-tab" id="tab-run-py">
+<div class="tab-labels">
+<label for="tab-run-ts">TypeScript (repo excerpt)</label>
+<label for="tab-run-py">Python (teaching equivalent)</label>
+</div>
+<div class="tab-content">
+<div class="tab-panel ts">
+
 ```ts
+// Excerpt from examples/session-stores/redis/demo.ts
 async function run(prompt: string, resume?: string) {
   let sessionId: string | undefined
   for await (const m of query({
@@ -147,6 +190,31 @@ async function run(prompt: string, resume?: string) {
   return sessionId
 }
 ```
+
+</div>
+<div class="tab-panel py">
+
+```py
+# Teaching-equivalent (repository has no Python SDK here)
+async def run(prompt: str, resume: Optional[str] = None) -> Optional[str]:
+    session_id = None
+    async for m in query(prompt=prompt, options={"sessionStore": store, "resume": resume, "maxTurns": 1}):
+        if m.type == "system" and getattr(m, "subtype", None) == "init":
+            session_id = m.session_id
+        if m.type == "result":
+            print(f"[{m.subtype}]", getattr(m, "result", ""))
+    return session_id
+```
+
+</div>
+</div>
+</div>
+
+> TypeScript 片段直接取自 [examples/session-stores/redis/demo.ts](examples/session-stores/redis/demo.ts#L1-L36)。下面两到四行要点说明紧随其后。
+
+- 这段代码是一个最小的可运行示例，用来演示如何通过 `query()` 启动一次会话并捕获 `system/init` 与 `result` 消息。
+- 关注点：`options.sessionStore`（把会话镜像到外部存储）、`system/init`（从中记录 `sessionId`）和 `result`（拿到最终输出）。
+- 类比：把 `sessionId` 当作会话的“账本编号”，`resume` 就是下一次继续那本账的凭证。
 
 你应该注意三个动作：
 

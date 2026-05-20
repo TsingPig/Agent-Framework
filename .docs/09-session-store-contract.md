@@ -18,6 +18,124 @@
 
 其中只有 append 和 load 是必需项，其余是可选项。
 
+## 先看真实契约
+
+这一章很适合直接贴接口，因为接口本身就已经说明了设计重点。Python 版本仍然是教学等价写法，目的是把契约结构讲清楚。
+
+<style>
+.code-tabs {
+  margin: 16px 0;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.code-tabs input {
+  display: none;
+}
+
+.code-tabs .tab-labels {
+  display: flex;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
+}
+
+.code-tabs .tab-labels label {
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  border-right: 1px solid #d0d7de;
+}
+
+.code-tabs .tab-panel {
+  display: none;
+  padding: 0;
+}
+
+.code-tabs pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+#sessionstore-tab-ts:checked ~ .tab-labels label[for="sessionstore-tab-ts"],
+#sessionstore-tab-py:checked ~ .tab-labels label[for="sessionstore-tab-py"] {
+  background: white;
+  font-weight: 600;
+}
+
+#sessionstore-tab-ts:checked ~ .tab-content .ts,
+#sessionstore-tab-py:checked ~ .tab-content .py {
+  display: block;
+}
+</style>
+<div class="code-tabs">
+<input type="radio" name="sessionstore-code-tab" id="sessionstore-tab-ts" checked>
+<input type="radio" name="sessionstore-code-tab" id="sessionstore-tab-py">
+<div class="tab-labels">
+<label for="sessionstore-tab-ts">TypeScript</label>
+<label for="sessionstore-tab-py">Python</label>
+</div>
+<div class="tab-content">
+<div class="tab-panel ts">
+
+```ts
+export declare type SessionStore = {
+    append(key: SessionKey, entries: SessionStoreEntry[]): Promise<void>;
+    load(key: SessionKey): Promise<SessionStoreEntry[] | null>;
+    listSessions?(projectKey: string): Promise<Array<{
+        sessionId: string;
+        mtime: number;
+    }>>;
+    delete?(key: SessionKey): Promise<void>;
+    listSubkeys?(key: {
+        projectKey: string;
+        sessionId: string;
+    }): Promise<string[]>;
+};
+```
+
+</div>
+<div class="tab-panel py">
+
+```py
+class SessionStore(Protocol):
+    async def append(
+        self,
+        key: SessionKey,
+        entries: list[SessionStoreEntry],
+    ) -> None: ...
+
+    async def load(
+        self,
+        key: SessionKey,
+    ) -> list[SessionStoreEntry] | None: ...
+
+    async def listSessions(
+        self,
+        projectKey: str,
+    ) -> list[dict[str, int]]: ...
+
+    async def delete(self, key: SessionKey) -> None: ...
+
+    async def listSubkeys(
+        self,
+        key: dict[str, str],
+    ) -> list[str]: ...
+```
+
+</div>
+</div>
+</div>
+
+> 这段接口最值得注意的地方，不是方法多，而是主次非常清楚：`append` 和 `load` 是最小闭环，剩下三个方法是在恢复、列举和清理阶段把系统补完整。
+
+- `append` 负责写入新增条目。
+- `load` 负责把一条会话完整取回来。
+- `listSessions`、`delete`、`listSubkeys` 让系统具备发现、删除、恢复分支这些能力。
+
+你可以把 SessionStore 想成“会话外存总线”。主线只有两步：写进去、取出来。其他方法像围绕总线长出来的管理能力。
+
 ## 先理解设计哲学
 
 ### 哲学 1：主写在本地，外部存储是镜像

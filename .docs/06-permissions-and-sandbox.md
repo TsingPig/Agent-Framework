@@ -19,12 +19,108 @@ Agent 真正进入工程环境后，最先要解决的是工具调用由谁批�
 
 在 ../third_party/claude-agent-sdk-npm/package/sdk.d.ts 中，PermissionMode 定义为：
 
+下面先直接看一眼真实类型。Python 版本仍然是教学等价写法，目的是帮助你把语法和概念对上。
+
+<style>
+.code-tabs {
+  margin: 16px 0;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.code-tabs input {
+  display: none;
+}
+
+.code-tabs .tab-labels {
+  display: flex;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
+}
+
+.code-tabs .tab-labels label {
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  border-right: 1px solid #d0d7de;
+}
+
+.code-tabs .tab-panel {
+  display: none;
+  padding: 0;
+}
+
+.code-tabs pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+#permission-tab-ts:checked ~ .tab-labels label[for="permission-tab-ts"],
+#permission-tab-py:checked ~ .tab-labels label[for="permission-tab-py"] {
+  background: white;
+  font-weight: 600;
+}
+
+#permission-tab-ts:checked ~ .tab-content .ts,
+#permission-tab-py:checked ~ .tab-content .py {
+  display: block;
+}
+</style>
+<div class="code-tabs">
+<input type="radio" name="permission-code-tab" id="permission-tab-ts" checked>
+<input type="radio" name="permission-code-tab" id="permission-tab-py">
+<div class="tab-labels">
+<label for="permission-tab-ts">TypeScript</label>
+<label for="permission-tab-py">Python</label>
+</div>
+<div class="tab-content">
+<div class="tab-panel ts">
+
+```ts
+export declare type PermissionMode =
+  | 'default'
+  | 'acceptEdits'
+  | 'bypassPermissions'
+  | 'plan'
+  | 'dontAsk'
+  | 'auto';
+```
+
+</div>
+<div class="tab-panel py">
+
+```py
+PermissionMode = Literal[
+    "default",
+    "acceptEdits",
+    "bypassPermissions",
+    "plan",
+    "dontAsk",
+    "auto",
+]
+```
+
+</div>
+</div>
+</div>
+
+> `Literal[...]` 在 Python 里表示“这个值只能从几个固定候选里选”。所以这里表达的是：权限模式不是自由文本，而是一组事先定义好的运行策略。
+
 - default：标准模式，危险操作需要确认。
 - acceptEdits：自动接受文件编辑类操作。
 - bypassPermissions：跳过所有权限检查，但必须显式允许。
 - plan：只规划，不真正执行工具。
 - dontAsk：不弹询问，未预授权就拒绝。
 - auto：由模型分类器决定是否批准。
+
+把这六种模式想成实验室门禁会比较容易：
+
+- `default` 像普通门禁，关键操作要刷卡确认。
+- `plan` 像先走彩排路线，只讲步骤，不开机器。
+- `dontAsk` 像“没在白名单里就不放行”。
+- `bypassPermissions` 像总控钥匙，只适合受控环境。
 
 ## 这六种模式怎么理解
 
