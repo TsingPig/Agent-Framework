@@ -164,15 +164,7 @@ asyncio.run(main())
 
 看 ../examples/session-stores/redis/demo.ts，可以看到一个非常好的教学版本：
 
-<div class="code-tabs">
-<input type="radio" name="run-code-tab" id="tab-run-ts" checked>
-<input type="radio" name="run-code-tab" id="tab-run-py">
-<div class="tab-labels">
-<label for="tab-run-ts">TypeScript (repo excerpt)</label>
-<label for="tab-run-py">Python (teaching equivalent)</label>
-</div>
-<div class="tab-content">
-<div class="tab-panel ts">
+
 
 ```ts
 // Excerpt from examples/session-stores/redis/demo.ts
@@ -191,14 +183,16 @@ async function run(prompt: string, resume?: string) {
 }
 ```
 
-</div>
-<div class="tab-panel py">
-
 ```py
-# Teaching-equivalent (repository has no Python SDK here)
 async def run(prompt: str, resume: Optional[str] = None) -> Optional[str]:
     session_id = None
-    async for m in query(prompt=prompt, options={"sessionStore": store, "resume": resume, "maxTurns": 1}):
+    # sessionStore 是把会话镜像到外部存储的适配器，类比生活中的账本，resume 是继续上次会话的凭证
+    # maxTurns表示这次调用最多进行多少轮对话，设成k则最多进行k轮用户-模型交互，超过后会自动收束并返回结果
+    # m是每次迭代得到的消息，m.type是消息类型，m.subtype是消息子类型
+    # system表示系统消息(系统这里指的是 SDK 内部的系统，可能是初始化、状态更新等)，init表示会话初始化，result表示结果消息
+    # 例如一个m可能长这样：m = { type: "system", subtype: "init", session_id: "abc123" }，
+    # 另一个m可能是 { type: "result", subtype: "final", result: "模型的回答" }
+    async for m in query(prompt=prompt, options={"sessionStore": store, "resume": resume, "maxTurns": 1}): 
         if m.type == "system" and getattr(m, "subtype", None) == "init":
             session_id = m.session_id
         if m.type == "result":
@@ -206,9 +200,6 @@ async def run(prompt: str, resume: Optional[str] = None) -> Optional[str]:
     return session_id
 ```
 
-</div>
-</div>
-</div>
 
 > TypeScript 片段直接取自 [examples/session-stores/redis/demo.ts](examples/session-stores/redis/demo.ts#L1-L36)。下面两到四行要点说明紧随其后。
 
@@ -276,9 +267,7 @@ sequenceDiagram
 
 这张图故意只保留主干路径，目的是先让你看清一次最小调用的骨架。真实运行里还可能出现工具调用、hook 事件、子 Agent 任务和更多状态消息。等你读到 [08-message-stream-and-resume.md](08-message-stream-and-resume.md) 和 [09-session-store-contract.md](09-session-store-contract.md)，再把这些分支加回来，会更容易消化。
 
-## 为什么示例里把 maxTurns 设成 1
 
-因为教学时我们常常先把循环压扁。让一次 query 尽快返回，便于观察 sessionId、result、resume 的关系。等概念稳定后，再放开回合数。
 
 ## 读 query() 时要盯的三个问题
 

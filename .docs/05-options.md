@@ -6,7 +6,7 @@
 
 ## 先看一个最小但真实的 options
 
-下面这段 TypeScript 不是我临时编的，而是直接来自 ../examples/session-stores/redis/demo.ts 里的调用现场。Python 版本是教学等价写法，用来帮你迁移语法；当前仓库实际代码仍以 TypeScript 为准。
+来自 ../examples/session-stores/redis/demo.ts 里的调用现场。Python 版本是教学等价写法，用来帮你迁移语法；当前仓库实际代码仍以 TypeScript 为准。
 
 <style>
 .code-tabs {
@@ -199,3 +199,4 @@ mindmap
 ## 本章小结
 
 Options 可以看成一组系统控制杆。你每拨动一个字段，实际上都在改变 Agent 的边界、能力、风险和可观测性。
+![alt text](src/04-option.png)
